@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.github.pagehelper.PageHelper;
 import com.macro.mall.bo.AdminUserDetails;
+import com.macro.mall.common.exception.ApiException;
 import com.macro.mall.dao.UmsAdminPermissionRelationDao;
 import com.macro.mall.dao.UmsAdminRoleRelationDao;
 import com.macro.mall.dto.UmsAdminParam;
@@ -16,6 +17,7 @@ import com.macro.mall.model.*;
 import com.macro.mall.security.util.JwtTokenUtil;
 import com.macro.mall.service.UmsAdminCacheService;
 import com.macro.mall.service.UmsAdminService;
+import org.apache.http.util.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -33,6 +35,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
@@ -46,23 +49,23 @@ import java.util.stream.Collectors;
 @Service
 public class UmsAdminServiceImpl implements UmsAdminService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UmsAdminServiceImpl.class);
-    @Autowired
+    @Resource
     private JwtTokenUtil jwtTokenUtil;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
+//    @Autowired
+//    private PasswordEncoder passwordEncoder;
+    @Resource
     private UmsAdminMapper adminMapper;
-    @Autowired
+    @Resource
     private UmsAdminRoleRelationMapper adminRoleRelationMapper;
-    @Autowired
+    @Resource
     private UmsAdminRoleRelationDao adminRoleRelationDao;
-    @Autowired
+    @Resource
     private UmsAdminPermissionRelationMapper adminPermissionRelationMapper;
-    @Autowired
+    @Resource
     private UmsAdminPermissionRelationDao adminPermissionRelationDao;
-    @Autowired
+    @Resource
     private UmsAdminLoginLogMapper loginLogMapper;
-    @Autowired
+    @Resource
     private UmsAdminCacheService adminCacheService;
 
     @Override
@@ -94,8 +97,8 @@ public class UmsAdminServiceImpl implements UmsAdminService {
             return null;
         }
         //将密码进行加密操作
-        String encodePassword = passwordEncoder.encode(umsAdmin.getPassword());
-        umsAdmin.setPassword(encodePassword);
+//        String encodePassword = passwordEncoder.encode(umsAdmin.getPassword());
+//        umsAdmin.setPassword(encodePassword);
         adminMapper.insert(umsAdmin);
         return umsAdmin;
     }
@@ -106,9 +109,15 @@ public class UmsAdminServiceImpl implements UmsAdminService {
         //密码需要客户端加密后传递
         try {
             UserDetails userDetails = loadUserByUsername(username);
-            if(!passwordEncoder.matches(password,userDetails.getPassword())){
+//            if(!passwordEncoder.matches(password,userDetails.getPassword())){
+//                throw new BadCredentialsException("密码不正确");
+//            }
+
+            if(!userDetails.getPassword().equals(password)){
                 throw new BadCredentialsException("密码不正确");
+//                throw new ApiException("222密码不正确");
             }
+
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             token = jwtTokenUtil.generateToken(userDetails);
@@ -181,7 +190,8 @@ public class UmsAdminServiceImpl implements UmsAdminService {
             if(StrUtil.isEmpty(admin.getPassword())){
                 admin.setPassword(null);
             }else{
-                admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+//                admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+                admin.setPassword(admin.getPassword());
             }
         }
         int count = adminMapper.updateByPrimaryKeySelective(admin);
@@ -293,10 +303,17 @@ public class UmsAdminServiceImpl implements UmsAdminService {
             return -2;
         }
         UmsAdmin umsAdmin = adminList.get(0);
-        if(!passwordEncoder.matches(param.getOldPassword(),umsAdmin.getPassword())){
+//        if(!passwordEncoder.matches(param.getOldPassword(),umsAdmin.getPassword())){
+//            return -3;
+//        }
+//        umsAdmin.setPassword(passwordEncoder.encode(param.getNewPassword()));
+
+
+        if(!param.getOldPassword().equals(umsAdmin.getPassword())){
             return -3;
         }
-        umsAdmin.setPassword(passwordEncoder.encode(param.getNewPassword()));
+        umsAdmin.setPassword(param.getNewPassword());
+
         adminMapper.updateByPrimaryKey(umsAdmin);
         adminCacheService.delAdmin(umsAdmin.getId());
         return 1;
