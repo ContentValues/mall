@@ -118,8 +118,14 @@ public class UmsAdminServiceImpl implements UmsAdminService {
 //                throw new ApiException("222密码不正确");
             }
 
+
+            /**
+             * 这一步操作是干嘛的？？？？？？
+             */
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+
             token = jwtTokenUtil.generateToken(userDetails);
 //            updateLoginTimeByUsername(username);
             insertLoginLog(username);

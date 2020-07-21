@@ -11,7 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,12 @@ public class MallSecurityConfig extends SecurityConfig {
     public UserDetailsService userDetailsService() {
         //获取登录用户信息
         return username -> adminService.loadUserByUsername(username);
+//        return new UserDetailsService(){
+//            @Override
+//            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+//                return adminService.loadUserByUsername(username);
+//            }
+//        };
     }
 
     @Bean

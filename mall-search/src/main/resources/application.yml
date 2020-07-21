@@ -5,6 +5,7 @@ spring:
 server:
   port: 8081
 
+#如果mapper类和mapper.xml不在同一个路径下时，mapper-locations就有用了
 mybatis:
   mapper-locations:
     - classpath:dao/*.xml

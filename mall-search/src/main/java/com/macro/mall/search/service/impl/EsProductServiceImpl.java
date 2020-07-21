@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -48,16 +49,16 @@ import java.util.Map;
 @Service
 public class EsProductServiceImpl implements EsProductService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EsProductServiceImpl.class);
+    @Resource
+    private EsProductDao esProductDao;
     @Autowired
-    private EsProductDao productDao;
-    @Autowired
-    private EsProductRepository productRepository;
-    @Autowired
+    private EsProductRepository esProductRepository;
+    @Resource
     private ElasticsearchTemplate elasticsearchTemplate;
     @Override
     public int importAll() {
-        List<EsProduct> esProductList = productDao.getAllEsProductList(null);
-        Iterable<EsProduct> esProductIterable = productRepository.saveAll(esProductList);
+        List<EsProduct> esProductList = esProductDao.getAllEsProductList(null);
+        Iterable<EsProduct> esProductIterable = esProductRepository.saveAll(esProductList);
         Iterator<EsProduct> iterator = esProductIterable.iterator();
         int result = 0;
         while (iterator.hasNext()) {
@@ -69,16 +70,16 @@ public class EsProductServiceImpl implements EsProductService {
 
     @Override
     public void delete(Long id) {
-        productRepository.deleteById(id);
+        esProductRepository.deleteById(id);
     }
 
     @Override
     public EsProduct create(Long id) {
         EsProduct result = null;
-        List<EsProduct> esProductList = productDao.getAllEsProductList(id);
+        List<EsProduct> esProductList = esProductDao.getAllEsProductList(id);
         if (esProductList.size() > 0) {
             EsProduct esProduct = esProductList.get(0);
-            result = productRepository.save(esProduct);
+            result = esProductRepository.save(esProduct);
         }
         return result;
     }
@@ -92,14 +93,14 @@ public class EsProductServiceImpl implements EsProductService {
                 esProduct.setId(id);
                 esProductList.add(esProduct);
             }
-            productRepository.deleteAll(esProductList);
+            esProductRepository.deleteAll(esProductList);
         }
     }
 
     @Override
     public Page<EsProduct> search(String keyword, Integer pageNum, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNum, pageSize);
-        return productRepository.findByNameOrSubTitleOrKeywords(keyword, keyword, keyword, pageable);
+        return esProductRepository.findByNameOrSubTitleOrKeywords(keyword, keyword, keyword, pageable);
     }
 
     @Override
@@ -157,13 +158,13 @@ public class EsProductServiceImpl implements EsProductService {
         nativeSearchQueryBuilder.withSort(SortBuilders.scoreSort().order(SortOrder.DESC));
         NativeSearchQuery searchQuery = nativeSearchQueryBuilder.build();
         LOGGER.info("DSL:{}", searchQuery.getQuery().toString());
-        return productRepository.search(searchQuery);
+        return esProductRepository.search(searchQuery);
     }
 
     @Override
     public Page<EsProduct> recommend(Long id, Integer pageNum, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNum, pageSize);
-        List<EsProduct> esProductList = productDao.getAllEsProductList(id);
+        List<EsProduct> esProductList = esProductDao.getAllEsProductList(id);
         if (esProductList.size() > 0) {
             EsProduct esProduct = esProductList.get(0);
             String keyword = esProduct.getName();
@@ -196,7 +197,7 @@ public class EsProductServiceImpl implements EsProductService {
             builder.withPageable(pageable);
             NativeSearchQuery searchQuery = builder.build();
             LOGGER.info("DSL:{}", searchQuery.getQuery().toString());
-            return productRepository.search(searchQuery);
+            return esProductRepository.search(searchQuery);
         }
         return new PageImpl<>(null);
     }
